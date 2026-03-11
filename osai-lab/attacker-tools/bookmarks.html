@@ -1,0 +1,80 @@
+<!DOCTYPE NETSCAPE-Bookmark-file-1>
+<!-- This is an automatically generated file.
+     It will be read and overwritten.
+     DO NOT EDIT! -->
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=UTF-8">
+<TITLE>Bookmarks</TITLE>
+<H1>Bookmarks Menu</H1>
+
+<DL><p>
+    <DT><H3>OSAI+ Lab</H3>
+    <DL><p>
+
+        <DT><H3>Module 1 - RAG Pipeline</H3>
+        <DL><p>
+            <DT><A HREF="http://192.168.19.1:8001/docs">RAG App - Swagger UI</A>
+            <DD>Vulnerable RAG API. Endpoints: /ingest, /query, /documents
+            <DT><A HREF="http://192.168.19.1:8001/health">RAG App - Health</A>
+            <DT><A HREF="http://192.168.19.1:8001/documents">RAG App - Document Store (data leak)</A>
+            <DT><A HREF="http://192.168.19.1:8000/docs">ChromaDB - API Docs</A>
+            <DD>Vector database backend. No authentication.
+            <DT><A HREF="http://192.168.19.1:8000/api/v1/heartbeat">ChromaDB - Heartbeat</A>
+            <DT><A HREF="http://192.168.19.1:11434/api/tags">Ollama - Model List</A>
+            <DD>LLM backend. Lists all available models.
+        </DL><p>
+
+        <DT><H3>Module 2 - Multi-Agent System</H3>
+        <DL><p>
+            <DT><A HREF="http://192.168.19.1:8002/docs">Agent Orchestrator - Swagger UI</A>
+            <DD>Central orchestrator. Endpoints: /task, /a2a/message, /agents
+            <DT><A HREF="http://192.168.19.1:8002/agents">Agent Orchestrator - Topology Leak</A>
+            <DD>Leaks all agent URLs, roles, and system prompt
+            <DT><A HREF="http://192.168.19.1:8003/docs">File Worker - Swagger UI</A>
+            <DD>File operations agent. No auth. Host filesystem mounted.
+            <DT><A HREF="http://192.168.19.1:8004/docs">Shell Worker - Swagger UI</A>
+            <DD>Command execution agent. No auth. Runs as root.
+        </DL><p>
+
+        <DT><H3>Module 3 - MCP Server</H3>
+        <DL><p>
+            <DT><A HREF="http://192.168.19.1:8005/docs">MCP Server - Swagger UI</A>
+            <DD>Vulnerable MCP server. Tools: file_read, http_fetch, db_query, exec_cmd
+            <DT><A HREF="http://192.168.19.1:8005/tools">MCP Server - Tool List</A>
+            <DD>Enumerates all available MCP tools
+            <DT><A HREF="http://192.168.19.1:8006/docs">MCP Client - Swagger UI</A>
+            <DD>LLM-powered client that trusts MCP output blindly
+        </DL><p>
+
+        <DT><H3>Module 4 - AI Supply Chain</H3>
+        <DL><p>
+            <DT><A HREF="http://192.168.19.1:8007/docs">Model Registry - Swagger UI</A>
+            <DD>Model storage. No signature verification, arbitrary uploads.
+            <DT><A HREF="http://192.168.19.1:8007/models">Model Registry - Model List</A>
+            <DD>Lists all stored models with metadata
+            <DT><A HREF="http://192.168.19.1:8008/docs">Pipeline Runner - Swagger UI</A>
+            <DD>ML pipeline. Uses pickle.load on untrusted models.
+            <DT><A HREF="http://192.168.19.1:9001">MinIO Console</A>
+            <DD>S3-compatible object storage. Creds: minioadmin / minioadmin
+        </DL><p>
+
+        <DT><H3>Module 5 - AI Infrastructure</H3>
+        <DL><p>
+            <DT><A HREF="http://192.168.19.1:8009/docs">Model API - Swagger UI</A>
+            <DD>Inference API. No rate limiting. Leaks model info and query logs.
+            <DT><A HREF="http://192.168.19.1:8009/models">Model API - Model Info Leak</A>
+            <DT><A HREF="http://192.168.19.1:8009/stats">Model API - Query Log Exposure</A>
+            <DT><A HREF="http://192.168.19.1:8010/docs">Embedding Service - Swagger UI</A>
+            <DD>Embedding API. Timing oracle, cache poisoning, cache dump.
+            <DT><A HREF="http://192.168.19.1:8010/cache/dump">Embedding Service - Cache Dump</A>
+        </DL><p>
+
+        <DT><H3>Monitoring</H3>
+        <DL><p>
+            <DT><A HREF="https://192.168.19.1:9443">Portainer - Container Management</A>
+            <DD>Docker management UI. Creds: admin / labpassword
+            <DT><A HREF="http://192.168.19.1:16686">Jaeger - Tracing UI</A>
+            <DD>Distributed tracing. View request flows across services.
+        </DL><p>
+
+    </DL><p>
+</DL><p>

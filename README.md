@@ -23,68 +23,56 @@ docker compose up -d --build
 docker logs -f ollama
 
 # On Kali VM
+cd osai-lab/attacker-tools
+python3 -m venv venv && source venv/bin/activate
 pip install httpx
-python3 lab_check.py    # from attacker-tools/
+python3 lab_check.py
 ```
 
-## Services
+Import `osai-lab/attacker-tools/bookmarks.html` into Firefox on Kali for organized access to all service UIs.
 
-| Module | Service | Kali Access | Primary Vulns |
-|---|---|---|---|
-| **RAG Pipeline** | rag-app | :8001 | Prompt injection, path traversal, data exfil |
-| | chromadb | :8000 | No auth |
-| | ollama | :11434 | Open API |
-| **Multi-Agent** | orchestrator | :8002 | Prompt injection, goal hijacking, topology leak |
-| | worker-file | :8003 | No auth, path traversal, host filesystem access |
-| | worker-shell | :8004 | No auth, arbitrary command execution |
-| **MCP Server** | mcp-server | :8005 | SSRF, SQLi, RCE, path traversal |
-| | mcp-client | :8006 | Blind trust of MCP output, tool injection |
-| | postgres | :5432 | Weak creds (admin/admin123) |
-| **Supply Chain** | model-registry | :8007 | No signature verification, arbitrary upload |
-| | pipeline-runner | :8008 | pickle RCE, registry redirect |
-| | minio | :9000 | Default creds (minioadmin/minioadmin) |
-| **AI Infra** | model-api | :8009 | Model extraction, info leak, no rate limit |
-| | embedding-service | :8010 | Timing oracle, cache poisoning, cache dump |
-| | redis | :6379 | No auth |
-| **Monitoring** | portainer | :9443 | Container management UI |
-| | jaeger | :16686 | Distributed tracing UI |
+## Lab Modules
+
+| # | Module | Services | Ports | Primary Attacks |
+|---|---|---|---|---|
+| 1 | **RAG Pipeline** | rag-app, chromadb, ollama | :8001, :8000, :11434 | Prompt injection, doc poisoning, path traversal |
+| 2 | **Multi-Agent System** | orchestrator, worker-file, worker-shell | :8002, :8003, :8004 | Agent hijacking, A2A abuse, tool manipulation |
+| 3 | **MCP Server** | mcp-server, mcp-client, postgres | :8005, :8006, :5432 | SSRF, SQLi, RCE, tool injection |
+| 4 | **AI Supply Chain** | model-registry, pipeline-runner, minio | :8007, :8008, :9000 | Pickle RCE, model poisoning, S3 misconfig |
+| 5 | **AI Infrastructure** | model-api, embedding-service, redis | :8009, :8010, :6379 | Model extraction, timing oracle, cache poisoning |
+
+Plus **Portainer** (:9443) and **Jaeger** (:16686) for monitoring.
+
+## Documentation
+
+| Doc | Description |
+|---|---|
+| [Lab Overview](osai-lab/docs/lab-overview.md) | Full service map, module summary, shared infrastructure |
+| [Module 1 — RAG Pipeline](osai-lab/docs/module1-rag.md) | Prompt injection, document poisoning, data exfiltration |
+| [Module 2 — Multi-Agent System](osai-lab/docs/module2-agents.md) | Agent hijacking, A2A protocol, worker exploitation |
+| [Module 3 — MCP Server](osai-lab/docs/module3-mcp.md) | Tool injection, SSRF, SQLi, RCE |
+| [Module 4 — AI Supply Chain](osai-lab/docs/module4-supply-chain.md) | Pickle RCE, model poisoning, registry abuse |
+| [Module 5 — AI Infrastructure](osai-lab/docs/module5-infra.md) | Model extraction, timing attacks, cache poisoning |
+| [Networking](osai-lab/docs/networking.md) | Network topology, traffic flows, port map |
+| [Attack Guide](osai-lab/docs/attack-guide.md) | Per-module attack commands and examples |
 
 ## Attacker Tools
 
-Located in `osai-lab/attacker-tools/`, designed to run from Kali:
+Located in `osai-lab/attacker-tools/`, run from Kali:
 
-| Tool | Target | Attack |
+| Tool | Module | Description |
 |---|---|---|
 | `lab_check.py` | All | Functional health check for entire lab |
-| `rag_injector.py` | RAG | Prompt injection via document poisoning |
-| `agent_hijacker.py` | Agents | A2A manipulation, goal hijacking, direct worker access |
-| `mcp_exploiter.py` | MCP | SSRF, SQLi, RCE, tool injection |
-| `supply_chain_attack.py` | Supply Chain | Pickle RCE, model poisoning, registry redirect |
-| `model_extractor.py` | Infra | Model extraction, timing oracle, cache poisoning |
-
-## OSAI+ Module Coverage
-
-| OSAI Module | Lab Target | Attack Path |
-|---|---|---|
-| Recon for AI Targets | All services | Port scan, API enumeration, model fingerprinting |
-| Attacking AI Agents | orchestrator | Prompt injection, goal hijacking |
-| Multi-Agent / A2A | worker-* | A2A message tampering, worker impersonation |
-| Exploiting RAG | rag-app + chromadb | Doc poisoning, indirect injection, data exfil |
-| Attacking Embeddings | embedding-service | Embedding inversion, cache poisoning, timing oracle |
-| Attacking MCP | mcp-server | Tool injection, SSRF, SQLi via tools |
-| AI Supply Chain | registry + pipeline | Pickle RCE, model poisoning, S3 misconfig |
-| AI Infra Exploits | model-api | Model extraction, adversarial inputs |
-| Threat Modeling | All | Documentation exercise per target |
-| Capstone | Full lab chain | Multi-stage: recon -> RAG -> agent pivot -> supply chain RCE |
-
-## Docs
-
-- [Networking](osai-lab/docs/networking.md) — full network topology, traffic flows, port map
-- [Attack Guide](osai-lab/docs/attack-guide.md) — per-module attack commands and examples
+| `bookmarks.html` | All | Firefox bookmarks for all service UIs |
+| `rag_injector.py` | 1 | Prompt injection via document poisoning |
+| `agent_hijacker.py` | 2 | A2A manipulation, goal hijacking, direct worker access |
+| `mcp_exploiter.py` | 3 | SSRF, SQLi, RCE, tool injection |
+| `supply_chain_attack.py` | 4 | Pickle RCE, model poisoning, registry redirect |
+| `model_extractor.py` | 5 | Model extraction, timing oracle, cache poisoning |
 
 ## Notes
 
 - All `VULN:` comments in source code mark intentional vulnerabilities
-- Every service has a `/health` endpoint
-- All services log to stdout — use `docker compose logs <service>` to watch attacks
+- Every service has a `/health` endpoint and Swagger UI at `/docs`
+- All services log to stdout — use `docker compose logs -f <service>` to watch attacks
 - Ollama needs at least 8GB memory in Docker Desktop settings

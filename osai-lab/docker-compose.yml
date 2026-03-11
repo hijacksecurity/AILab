@@ -273,6 +273,7 @@ services:
         ipv4_address: 192.168.100.70
     ports:
       - "9443:9443"
+    command: --admin-password '$$2y$$05$$HTGDvpabjvmBp9Dc836YNeSiFKA56KRvdvaLjP4HTr/mjM.HD9KGe'
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - portainer-data:/data

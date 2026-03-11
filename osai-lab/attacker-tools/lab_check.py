@@ -70,11 +70,13 @@ def check_rag(client, results):
     try:
         r = client.get(f"http://{HOST}:8001/documents")
         docs = r.json()
-        doc_ids = docs.get("ids", [])
+        # Response is {"documents": {"ids": [...], ...}}
+        inner = docs.get("documents", docs)
+        doc_ids = inner.get("ids", []) if isinstance(inner, dict) else []
         count = len(doc_ids) if isinstance(doc_ids, list) else 0
         if count > 0:
             ok(f"Document store: {count} docs ingested")
-            for did in (doc_ids[:5] if isinstance(doc_ids, list) else []):
+            for did in doc_ids[:5]:
                 info(f"doc: {did}")
         else:
             warn("No documents ingested yet")
@@ -356,11 +358,15 @@ def check_infra(client, results):
 def check_monitoring(client, results):
     section("Portainer", 9443, "Container management UI")
     try:
-        r = client.get(f"https://{HOST}:9443/", verify=False)
-        if r.status_code in (200, 301, 302):
-            ok("Portainer UI reachable (HTTPS)")
-    except Exception:
-        warn("Portainer unreachable")
+        # Portainer uses self-signed HTTPS — need a separate client with verify=False
+        with httpx.Client(timeout=TIMEOUT, verify=False) as https_client:
+            r = https_client.get(f"https://{HOST}:9443/")
+            if r.status_code in (200, 301, 302):
+                ok("Portainer UI reachable (HTTPS, admin/labpassword)")
+            else:
+                warn(f"Portainer returned {r.status_code}")
+    except Exception as e:
+        warn(f"Portainer unreachable: {e}")
 
     section("Jaeger", 16686, "Distributed tracing UI")
     try:

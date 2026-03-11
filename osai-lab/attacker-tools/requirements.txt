@@ -1,0 +1,8 @@
+httpx
+chromadb
+rich
+click
+pydantic
+requests
+python-dotenv
+numpy

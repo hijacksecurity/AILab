@@ -1,0 +1,12 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY runner.py .
+
+EXPOSE 8008
+
+CMD ["uvicorn", "runner:app", "--host", "0.0.0.0", "--port", "8008"]

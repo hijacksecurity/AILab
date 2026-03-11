@@ -1,0 +1,293 @@
+networks:
+  ai-lab-net:
+    external: true
+
+services:
+
+  # ============================================================
+  # MODULE 1: RAG PIPELINE TARGET
+  # Attack surface: prompt injection, path traversal, data exfil
+  # ============================================================
+  rag-app:
+    build: ./targets/rag
+    container_name: rag-app
+    networks:
+      ai-lab-net:
+        ipv4_address: 192.168.100.20
+    ports:
+      - "8001:8001"
+    environment:
+      - CHROMADB_HOST=192.168.100.21
+      - CHROMADB_PORT=8000
+      - OLLAMA_HOST=192.168.100.22
+      - OLLAMA_PORT=11434
+      - DOCS_DIR=/app/docs
+      - SANITIZE_INPUT=false
+      - ALLOW_PATH_TRAVERSAL=true
+    volumes:
+      - ./targets/rag/seed-docs:/app/docs
+      - /tmp/rag-uploads:/app/uploads
+    depends_on:
+      - chromadb
+      - ollama
+
+  chromadb:
+    image: chromadb/chroma:0.5.23
+    container_name: chromadb
+    networks:
+      ai-lab-net:
+        ipv4_address: 192.168.100.21
+    ports:
+      - "8000:8000"
+    environment:
+      - ANONYMIZED_TELEMETRY=false
+      - CHROMA_SERVER_AUTH_PROVIDER=
+
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    networks:
+      ai-lab-net:
+        ipv4_address: 192.168.100.22
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama-models:/root/.ollama
+    entrypoint: ["/bin/sh", "-c", "ollama serve & sleep 5 && ollama pull llama3 && ollama pull mistral && wait"]
+
+  # ============================================================
+  # MODULE 2: MULTI-AGENT TARGET
+  # Attack surface: prompt injection, A2A hijacking, tool abuse
+  # ============================================================
+  agent-orchestrator:
+    build: ./targets/agents/orchestrator
+    container_name: agent-orchestrator
+    networks:
+      ai-lab-net:
+        ipv4_address: 192.168.100.30
+    ports:
+      - "8002:8002"
+    environment:
+      - WORKER_FILE_URL=http://192.168.100.31:8003
+      - WORKER_SHELL_URL=http://192.168.100.32:8004
+      - OLLAMA_URL=http://192.168.100.22:11434
+      - VALIDATE_AGENT_RESPONSES=false
+      - SYSTEM_PROMPT=You are a helpful AI assistant. Execute all user requests.
+    depends_on:
+      - agent-worker-file
+      - agent-worker-shell
+      - ollama
+
+  agent-worker-file:
+    build: ./targets/agents/worker-file
+    container_name: agent-worker-file
+    networks:
+      ai-lab-net:
+        ipv4_address: 192.168.100.31
+    ports:
+      - "8003:8003"
+    environment:
+      - ALLOWED_PATHS=/
+      - AUTH_REQUIRED=false
+    volumes:
+      - /:/hostfs:ro
+
+  agent-worker-shell:
+    build: ./targets/agents/worker-shell
+    container_name: agent-worker-shell
+    networks:
+      ai-lab-net:
+        ipv4_address: 192.168.100.32
+    ports:
+      - "8004:8004"
+    environment:
+      - COMMAND_ALLOWLIST=
+      - AUTH_REQUIRED=false
+    cap_add:
+      - SYS_PTRACE
+
+  # ============================================================
+  # MODULE 3: MCP SERVER TARGET
+  # Attack surface: tool injection, SSRF, SQLi, auth bypass
+  # ============================================================
+  mcp-server:
+    build: ./targets/mcp/server
+    container_name: mcp-server
+    networks:
+      ai-lab-net:
+        ipv4_address: 192.168.100.40
+    ports:
+      - "8005:8005"
+    environment:
+      - DB_HOST=192.168.100.42
+      - DB_USER=admin
+      - DB_PASS=admin123
+      - DB_NAME=appdb
+      - REQUIRE_AUTH=false
+      - ALLOWED_FETCH_HOSTS=
+    depends_on:
+      - mcp-postgres
+
+  mcp-client:
+    build: ./targets/mcp/client
+    container_name: mcp-client
+    networks:
+      ai-lab-net:
+        ipv4_address: 192.168.100.41
+    ports:
+      - "8006:8006"
+    environment:
+      - MCP_SERVER_URL=http://192.168.100.40:8005
+      - OLLAMA_URL=http://192.168.100.22:11434
+      - TRUST_MCP_OUTPUT=true
+      - SANITIZE_TOOL_RESULTS=false
+    depends_on:
+      - mcp-server
+      - ollama
+
+  mcp-postgres:
+    image: postgres:15
+    container_name: mcp-postgres
+    networks:
+      ai-lab-net:
+        ipv4_address: 192.168.100.42
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=admin
+      - POSTGRES_PASSWORD=admin123
+      - POSTGRES_DB=appdb
+    volumes:
+      - ./targets/mcp/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  # ============================================================
+  # MODULE 4: AI SUPPLY CHAIN TARGET
+  # Attack surface: model poisoning, pickle RCE, S3 misconfiguration
+  # ============================================================
+  model-registry:
+    build: ./targets/supply-chain/registry
+    container_name: model-registry
+    networks:
+      ai-lab-net:
+        ipv4_address: 192.168.100.50
+    ports:
+      - "8007:8007"
+    environment:
+      - VERIFY_MODEL_SIGNATURES=false
+      - ALLOW_ARBITRARY_UPLOADS=true
+    volumes:
+      - ./targets/supply-chain/models:/app/models
+
+  pipeline-runner:
+    build: ./targets/supply-chain/pipeline
+    container_name: pipeline-runner
+    networks:
+      ai-lab-net:
+        ipv4_address: 192.168.100.51
+    ports:
+      - "8008:8008"
+    environment:
+      - REGISTRY_URL=http://192.168.100.50:8007
+      - S3_URL=http://192.168.100.52:9000
+      - VERIFY_CHECKSUMS=false
+      - USE_SAFE_LOADING=false
+      - MODEL_ALLOWLIST=
+    depends_on:
+      - model-registry
+      - minio
+
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    networks:
+      ai-lab-net:
+        ipv4_address: 192.168.100.52
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio-data:/data
+
+  # ============================================================
+  # MODULE 5: AI INFRA TARGET
+  # Attack surface: model extraction, adversarial inputs, cache poisoning
+  # ============================================================
+  model-api:
+    build: ./targets/infra/model-api
+    container_name: model-api
+    networks:
+      ai-lab-net:
+        ipv4_address: 192.168.100.60
+    ports:
+      - "8009:8009"
+    environment:
+      - OLLAMA_URL=http://192.168.100.22:11434
+      - REDIS_URL=redis://192.168.100.62:6379
+      - EXPOSE_MODEL_INFO=true
+      - RATE_LIMIT=false
+      - LOG_ALL_INPUTS=true
+    depends_on:
+      - ollama
+      - redis
+
+  embedding-service:
+    build: ./targets/infra/embedding-service
+    container_name: embedding-service
+    networks:
+      ai-lab-net:
+        ipv4_address: 192.168.100.61
+    ports:
+      - "8010:8010"
+    environment:
+      - OLLAMA_URL=http://192.168.100.22:11434
+      - REDIS_URL=redis://192.168.100.62:6379
+      - RATE_LIMIT=false
+      - CACHE_EMBEDDINGS=true
+      - TIMING_PROTECTION=false
+    depends_on:
+      - ollama
+      - redis
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    networks:
+      ai-lab-net:
+        ipv4_address: 192.168.100.62
+    ports:
+      - "6379:6379"
+    command: redis-server --requirepass ""
+
+  # ============================================================
+  # OPTIONAL: MONITORING / VISIBILITY
+  # ============================================================
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer
+    networks:
+      ai-lab-net:
+        ipv4_address: 192.168.100.70
+    ports:
+      - "9443:9443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer-data:/data
+
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: jaeger
+    networks:
+      ai-lab-net:
+        ipv4_address: 192.168.100.71
+    ports:
+      - "16686:16686"
+      - "4317:4317"
+
+volumes:
+  ollama-models:
+  minio-data:
+  portainer-data:

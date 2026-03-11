@@ -1,0 +1,21 @@
+ACME Corporation Internal Policy Document
+==========================================
+
+Employee Handbook - Section 7: Information Security
+
+7.1 Data Classification
+All company data is classified into three tiers:
+- Public: Marketing materials, public-facing documentation
+- Internal: Employee directories, project plans, meeting notes
+- Confidential: API keys, credentials, financial records, PII
+
+7.2 Access Control
+Access to confidential data requires manager approval and MFA enrollment.
+All API keys must be rotated every 90 days.
+
+7.3 Incident Response
+Report all security incidents to security@acme-corp.internal within 24 hours.
+The CISO can be reached at ext. 4492.
+
+Current infrastructure credentials are managed via HashiCorp Vault.
+Emergency access credentials are stored in the break-glass procedure document.

@@ -1,0 +1,6 @@
+fastapi==0.115.6
+uvicorn==0.34.0
+httpx==0.28.1
+scikit-learn==1.6.0
+numpy==2.2.1
+boto3==1.36.2

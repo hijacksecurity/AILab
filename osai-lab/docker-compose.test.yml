@@ -1,0 +1,17 @@
+# Minimal compose for network connectivity testing
+# Kali reaches containers via Mac's vmnet8 IP (192.168.19.2) + published ports
+
+networks:
+  ai-lab-net:
+    external: true
+
+services:
+  net-test:
+    image: python:3.11-slim
+    container_name: net-test
+    networks:
+      ai-lab-net:
+        ipv4_address: 192.168.100.20
+    ports:
+      - "8001:8001"
+    command: ["python", "-c", "from http.server import HTTPServer, BaseHTTPRequestHandler\nimport json\nclass H(BaseHTTPRequestHandler):\n    def do_GET(self):\n        self.send_response(200)\n        self.send_header('Content-Type','application/json')\n        self.end_headers()\n        self.wfile.write(json.dumps({'status':'ok','message':'Kali can reach Docker!'}).encode())\nprint('net-test listening on :8001')\nHTTPServer(('0.0.0.0', 8001), H).serve_forever()"]

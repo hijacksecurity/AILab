@@ -55,6 +55,7 @@ Plus **Portainer** (:9443) and **Jaeger** (:16686) for monitoring.
 | [Module 5 — AI Infrastructure](osai-lab/docs/module5-infra.md) | Model extraction, timing attacks, cache poisoning |
 | [Networking](osai-lab/docs/networking.md) | Network topology, traffic flows, port map |
 | [Attack Guide](osai-lab/docs/attack-guide.md) | Per-module attack commands and examples |
+| [Lab Credentials](osai-lab/docs/lab-credentials.md) | Management creds, backing service access, lab reset |
 
 ## Attacker Tools
 

